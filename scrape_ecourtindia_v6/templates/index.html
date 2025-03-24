@@ -1,0 +1,40 @@
+<html>
+<head>
+  <title>Index</title>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+  >
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+</head>
+<body>
+  <main class="container">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Case Info</th>
+          <th scope="col">Petitioner/Respondent</th>
+          <th scope="col">HTML File</th>
+          <th scope="col">Orders</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for view in views %}
+          <tr>
+            <th scope="row">{{ view.case_info }}</th>
+            <td>{{ view.petitioner_respondent }}</td>
+            <td><a href='{{ view.htmlfile }}'>Open</a></td>
+            <td>
+              {% for pdf in view.pdfs %}
+                <a href='{{ pdf }}'>Open</a>
+              {% endfor %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>

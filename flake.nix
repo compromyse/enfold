@@ -6,7 +6,22 @@
     in {
       devShells.x86_64-linux.default = pkgs.mkShell {
         buildInputs = with pkgs; [
-          python3
+          (python3.withPackages (p: [
+            p.selenium
+            p.opencv-python
+            p.pytesseract
+            p.beautifulsoup4
+            p.tinydb
+            p.fastapi
+            p.uvicorn
+            p.jinja2
+          ]))
+          pyright
+
+          firefox
+          geckodriver
+
+          tesseract
         ];
       };
     };

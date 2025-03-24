@@ -175,3 +175,6 @@ cython_debug/
 
 venv/
 .direnv/
+scrape_ecourtindia_v6/html/
+scrape_ecourtindia_v6/pdf/
+scrape_ecourtindia_v6/db.json
