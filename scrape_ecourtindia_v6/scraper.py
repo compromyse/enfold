@@ -14,16 +14,10 @@ import cv2
 import pytesseract
 import tempfile
 
-Karnataka = '3'
-Bengaluru = '20'
-CMM_Court_Complex = '1030134@2,5,10,11,12,13,14@Y'
-Chief_Metropolitan = '10'
-
-ACT = '23'
-
 class Scraper:
-    def __init__(self, db):
+    def __init__(self, db, config):
         self.db = db
+        self.config = config
 
         self.driver = Firefox()
         self.driver.get('https://services.ecourts.gov.in/ecourtindia_v6/?p=casestatus/index')
@@ -45,11 +39,11 @@ class Scraper:
         sleep(1)
         element = self.driver.find_element(By.ID, i_d)
         select = Select(element)
-        select.select_by_value(value)
+        select.select_by_visible_text(value)
         sleep(1)
 
     def select_act(self):
-        self.select('actcode', ACT)
+        self.select('actcode', self.config['act'])
         sleep(1)
 
         # Disposed only
@@ -58,18 +52,19 @@ class Scraper:
 
     def goto_acts(self):
         while True:
-            self.select('sess_state_code', Karnataka)
-            self.select('sess_dist_code', Bengaluru)
-            self.select('court_complex_code', CMM_Court_Complex)
+            self.select('sess_state_code', self.config['state'])
+            self.select('sess_dist_code', self.config['district'])
+            self.select('court_complex_code', self.config['court_complex'])
 
             sleep(2)
-            if self.driver.find_element(By.CLASS_NAME, 'alert-danger-cust').is_displayed():
-                self.driver.execute_script('closeModel({modal_id:"validateError"})')
+            modal_is_open = self.driver.find_element(By.CLASS_NAME, 'alert-danger-cust').is_displayed()
+            if modal_is_open:
+                self.close_modal()
                 continue
 
             break
 
-        self.select('court_est_code', Chief_Metropolitan )
+        self.select('court_est_code', self.config['court_establishment'])
 
         sleep(1)
         element = self.driver.find_element(By.ID, 'act-tabMenu')
@@ -94,7 +89,7 @@ class Scraper:
             sleep(3)
 
             if self.driver.find_element(By.CLASS_NAME, 'alert-danger-cust').is_displayed():
-                self.driver.execute_script('closeModel({modal_id:"validateError"})')
+                self.close_modal()
                 element.clear()
             else:
                 captcha_incomplete = False
