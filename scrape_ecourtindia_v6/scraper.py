@@ -34,14 +34,15 @@ class Scraper:
         self.close_modal()
         self.goto_acts()
         self.select_act()
-        self.parse_table()
+        self.handle_table()
 
     def close_modal(self):
-        sleep(2)
+        sleep(3)
         self.driver.execute_script('closeModel({modal_id:"validateError"})')
         sleep(1)
 
     def select(self, i_d, value):
+        sleep(1)
         element = self.driver.find_element(By.ID, i_d)
         select = Select(element)
         select.select_by_value(value)
@@ -56,52 +57,63 @@ class Scraper:
         self.submit_search()
 
     def goto_acts(self):
-        self.select('sess_state_code', Karnataka)
-        self.select('sess_dist_code', Bengaluru)
-        self.select('court_complex_code', CMM_Court_Complex)
+        while True:
+            self.select('sess_state_code', Karnataka)
+            self.select('sess_dist_code', Bengaluru)
+            self.select('court_complex_code', CMM_Court_Complex)
 
-        sleep(1)
+            sleep(2)
+            if self.driver.find_element(By.CLASS_NAME, 'alert-danger-cust').is_displayed():
+                self.driver.execute_script('closeModel({modal_id:"validateError"})')
+                continue
+
+            break
+
         self.select('court_est_code', Chief_Metropolitan )
+
         sleep(1)
         element = self.driver.find_element(By.ID, 'act-tabMenu')
         element.click()
         sleep(1)
 
     def submit_search(self):
-        sleep(2)
-        img = self.driver.find_element(By.ID, 'captcha_image')
-        temp = tempfile.NamedTemporaryFile(suffix='.png')
-        img.screenshot(temp.name)
+        captcha_incomplete = True
+        while captcha_incomplete:
+            sleep(2)
+            img = self.driver.find_element(By.ID, 'captcha_image')
+            temp = tempfile.NamedTemporaryFile(suffix='.png')
+            img.screenshot(temp.name)
 
-        img = cv2.imread(temp.name)
-        text = pytesseract.image_to_string(img).strip()
+            img = cv2.imread(temp.name)
+            text = pytesseract.image_to_string(img).strip()
 
-        element = self.driver.find_element(By.ID, 'act_captcha_code')
-        element.send_keys(text)
+            element = self.driver.find_element(By.ID, 'act_captcha_code')
+            element.send_keys(text)
 
-        self.driver.execute_script('submitAct()')
-        sleep(3)
+            self.driver.execute_script('submitAct()')
+            sleep(3)
 
+            if self.driver.find_element(By.CLASS_NAME, 'alert-danger-cust').is_displayed():
+                self.driver.execute_script('closeModel({modal_id:"validateError"})')
+                element.clear()
+            else:
+                captcha_incomplete = False
 
-    def parse_table(self):
+    def handle_table(self):
         table_innerhtml = self.driver.find_element(By.ID, 'dispTable').get_attribute('innerHTML')
-        rows = BeautifulSoup(str(table_innerhtml), 'html.parser').find_all('td')
+        self.rows = BeautifulSoup(str(table_innerhtml), 'html.parser').find_all('td')
         self.views = []
         i = 5
-        while i < len(rows):
-            self.views.append(rows[i])
+        while i < len(self.rows):
+            view = self.rows[i]
+
             self.current_view = {
-                'case_info': rows[i-2].get_text(strip=True),
-                'petitioner_respondent': ' Vs '.join(rows[i-1].get_text(strip=True).split('Vs')),
+                'case_info': self.rows[i-2].get_text(strip=True),
+                'petitioner_respondent': ' Vs '.join(self.rows[i-1].get_text(strip=True).split('Vs')),
                 'htmlfile': '',
                 'pdfs': []
             }
 
-            i += 4
-
-    def handle_views(self):
-        i = 0
-        for view in self.views:
             script = view.find_all('a')[0].get_attribute_list('onclick')[0]
             self.driver.execute_script(script)
             sleep(1)
@@ -120,12 +132,9 @@ class Scraper:
             self.parse_orders_table()
 
             self.db.insert(self.current_view)
+            print(f'INSERTED: {self.current_view}')
             self.driver.find_element(By.ID, 'main_back_act').click()
-
-            i += 1
-            if i == 10:
-                break
-
+            i += 4
 
     def parse_orders_table(self):
         try:
@@ -160,7 +169,10 @@ class Scraper:
             r = request.Request(pdf_url)
             r.add_header("Cookie", cookies)
 
-            with request.urlopen(r) as response, open(filename, "wb") as file:
-                file.write(response.read())
+            try:
+                with request.urlopen(r) as response, open(filename, "wb") as file:
+                    file.write(response.read())
+            except:
+                print(f'UNABLE TO FETCH PDF: {pdf_url}')
 
             self.driver.find_element(By.ID, 'modalOders').find_element(By.CLASS_NAME, 'btn-close').click()
