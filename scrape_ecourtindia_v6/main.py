@@ -6,6 +6,8 @@ import threading
 
 db = TinyDB('db.json')
 
+SCRAPE_ESTABLISHMENTS = True
+
 class ThreadSafeCSVWriter:
     def __init__(self, filename):
         self.file = open(filename, 'w', newline='')
@@ -25,7 +27,11 @@ def scrape_state_thread(state, config, csv_writer):
     try:
         for district in scraper.scrape_districts(state):
             for cmplx in scraper.scrape_complexes(state, district):
-                csv_writer.writerow([state, district, cmplx])
+                if SCRAPE_ESTABLISHMENTS:
+                    for establishment in scraper.scrape_establishments(state, district, cmplx):
+                        csv_writer.writerow([ state, district, cmplx, establishment ])
+                else:
+                    csv_writer.writerow([ state, district, cmplx ])
     except Exception as e:
         print(f"Error scraping {state}: {e}")
     finally:
@@ -43,7 +49,7 @@ def scrape_courts():
     states = m.scrape_states()
     m.driver.close()
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         futures = [
             executor.submit(scrape_state_thread, state, config, csv_writer) 
             for state in states

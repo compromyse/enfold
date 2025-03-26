@@ -82,6 +82,21 @@ class Scraper:
 
         return complexes
 
+    def scrape_establishments(self, state, district, cmplx):
+        self.select('sess_state_code', state)
+        sleep(0.2)
+        self.select('sess_dist_code', district)
+        sleep(0.2)
+        self.select('court_complex_code', cmplx)
+        sleep(1)
+
+        element = self.driver.find_element(By.ID, 'court_est_code')
+        options = Select(element).options
+        establishments = [ option.text for option in options[1:] ]
+        print(f'ESTABLISHMENTS: {establishments}')
+
+        return establishments
+
     def select_court(self):
         sleep(2)
         while True:
