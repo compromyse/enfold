@@ -6,6 +6,7 @@ from urllib import request
 
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.select import Select
 
 from bs4 import BeautifulSoup
@@ -19,16 +20,13 @@ class Scraper:
         self.db = db
         self.config = config
 
-        self.driver = Firefox()
+        options = Options()
+        options.add_argument("--headless")
+
+        self.driver = Firefox(options=options)
         self.driver.get('https://services.ecourts.gov.in/ecourtindia_v6/?p=casestatus/index')
 
         self.current_view = {}
-
-    def run(self):
-        self.close_modal()
-        self.goto_acts()
-        self.select_act()
-        self.handle_table()
 
     def close_modal(self):
         sleep(3)
@@ -50,7 +48,42 @@ class Scraper:
         self.driver.find_element(By.ID, 'radDAct').click()
         self.submit_search()
 
-    def goto_acts(self):
+    def scrape_states(self):
+        element = self.driver.find_element(By.ID, 'sess_state_code')
+        options = Select(element).options
+        states = [ option.text for option in options[1:] ]
+        print(f'STATES: {states}')
+
+        sleep(0.2)
+
+        return states
+
+    def scrape_districts(self, state):
+        self.select('sess_state_code', state)
+        sleep(0.2)
+
+        element = self.driver.find_element(By.ID, 'sess_dist_code')
+        options = Select(element).options
+        districts = [ option.text for option in options[1:] ]
+        print(f'DISTRICTS: {districts}')
+
+        return districts
+
+    def scrape_complexes(self, state, district):
+        self.select('sess_state_code', state)
+        sleep(0.2)
+        self.select('sess_dist_code', district)
+        sleep(0.2)
+
+        element = self.driver.find_element(By.ID, 'court_complex_code')
+        options = Select(element).options
+        complexes = [ option.text for option in options[1:] ]
+        print(f'COMPLEXES: {complexes}')
+
+        return complexes
+
+    def select_court(self):
+        sleep(2)
         while True:
             self.select('sess_state_code', self.config['state'])
             self.select('sess_dist_code', self.config['district'])
@@ -66,7 +99,7 @@ class Scraper:
 
         self.select('court_est_code', self.config['court_establishment'])
 
-        sleep(1)
+    def goto_acts(self):
         element = self.driver.find_element(By.ID, 'act-tabMenu')
         element.click()
         sleep(1)
