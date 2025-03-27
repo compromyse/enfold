@@ -21,5 +21,4 @@ def view_pdf(filename):
         abort(500, description=f"Internal server error: {str(e)}")
 
 if __name__ == '__main__':
-    os.makedirs(PDF_DIRECTORY, exist_ok=True)
     app.run(host='0.0.0.0', port=8000)
