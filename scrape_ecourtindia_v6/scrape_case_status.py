@@ -1,10 +1,7 @@
 import csv
-from scraper import Scraper
-from tinydb import TinyDB
+from modules.scraper_case_status import ScraperCaseStatus
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
-
-db = TinyDB('db.json')
 
 SCRAPE_ESTABLISHMENTS = True
 
@@ -22,14 +19,20 @@ class ThreadSafeCSVWriter:
         self.file.close()
 
 def scrape_state_thread(state, config, csv_writer):
-    scraper = Scraper(db, config)
+    scraper = ScraperCaseStatus(config)
     scraper.close_modal()
     try:
-        for district in scraper.scrape_districts(state):
-            for cmplx in scraper.scrape_complexes(state, district):
+        scraper.select('sess_state_code', state)
+        for district in scraper.scrape_districts():
+            scraper.select('sess_dist_code', district)
+            for cmplx in scraper.scrape_complexes():
+                scraper.select('court_complex_code', cmplx)
                 if SCRAPE_ESTABLISHMENTS:
-                    for establishment in scraper.scrape_establishments(state, district, cmplx):
-                        csv_writer.writerow([ state, district, cmplx, establishment ])
+                    establishments = []
+                    for establishment in scraper.scrape_establishments():
+                        establishments.append(establishment)
+
+                    csv_writer.writerow([ state, district, cmplx ] + establishments)
                 else:
                     csv_writer.writerow([ state, district, cmplx ])
     except Exception as e:
@@ -40,16 +43,16 @@ def scrape_state_thread(state, config, csv_writer):
 def scrape_courts():
     config = {}
 
-    m = Scraper(db, config)
+    m = ScraperCaseStatus(config)
     m.close_modal()
 
-    csv_writer = ThreadSafeCSVWriter('courts.csv')
+    csv_writer = ThreadSafeCSVWriter('csv/courts.csv')
     csv_writer.writerow(['State', 'District', 'Complex'])
 
     states = m.scrape_states()
     m.driver.close()
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         futures = [
             executor.submit(scrape_state_thread, state, config, csv_writer) 
             for state in states
@@ -66,7 +69,7 @@ def scrape_courts():
 def scrape_orders():
     config = {}
 
-    m = Scraper(db, config)
+    m = ScraperCaseStatus(config)
     m.close_modal()
 
     config['state'] = input('Select a state: ')

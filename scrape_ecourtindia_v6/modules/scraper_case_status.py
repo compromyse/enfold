@@ -4,9 +4,7 @@ import uuid
 
 from urllib import request
 
-from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.select import Select
 
 from bs4 import BeautifulSoup
@@ -15,30 +13,16 @@ import cv2
 import pytesseract
 import tempfile
 
-class Scraper:
-    def __init__(self, db, config):
-        self.db = db
+from tinydb import TinyDB
+
+from .scraper import Scraper
+
+class ScraperCaseStatus(Scraper):
+    def __init__(self, config):
+        Scraper.__init__(self, 'https://services.ecourts.gov.in/ecourtindia_v6/?p=casestatus/index')
+
+        self.db = TinyDB('db.json')
         self.config = config
-
-        options = Options()
-        options.add_argument("--headless")
-
-        self.driver = Firefox(options=options)
-        self.driver.get('https://services.ecourts.gov.in/ecourtindia_v6/?p=casestatus/index')
-
-        self.current_view = {}
-
-    def close_modal(self):
-        sleep(3)
-        self.driver.execute_script('closeModel({modal_id:"validateError"})')
-        sleep(1)
-
-    def select(self, i_d, value):
-        sleep(1)
-        element = self.driver.find_element(By.ID, i_d)
-        select = Select(element)
-        select.select_by_visible_text(value)
-        sleep(1)
 
     def select_act(self):
         self.select('actcode', self.config['act'])
@@ -47,55 +31,6 @@ class Scraper:
         # Disposed only
         self.driver.find_element(By.ID, 'radDAct').click()
         self.submit_search()
-
-    def scrape_states(self):
-        element = self.driver.find_element(By.ID, 'sess_state_code')
-        options = Select(element).options
-        states = [ option.text for option in options[1:] ]
-        print(f'STATES: {states}')
-
-        sleep(0.2)
-
-        return states
-
-    def scrape_districts(self, state):
-        self.select('sess_state_code', state)
-        sleep(0.2)
-
-        element = self.driver.find_element(By.ID, 'sess_dist_code')
-        options = Select(element).options
-        districts = [ option.text for option in options[1:] ]
-        print(f'DISTRICTS: {districts}')
-
-        return districts
-
-    def scrape_complexes(self, state, district):
-        self.select('sess_state_code', state)
-        sleep(0.2)
-        self.select('sess_dist_code', district)
-        sleep(0.2)
-
-        element = self.driver.find_element(By.ID, 'court_complex_code')
-        options = Select(element).options
-        complexes = [ option.text for option in options[1:] ]
-        print(f'COMPLEXES: {complexes}')
-
-        return complexes
-
-    def scrape_establishments(self, state, district, cmplx):
-        self.select('sess_state_code', state)
-        sleep(0.2)
-        self.select('sess_dist_code', district)
-        sleep(0.2)
-        self.select('court_complex_code', cmplx)
-        sleep(1)
-
-        element = self.driver.find_element(By.ID, 'court_est_code')
-        options = Select(element).options
-        establishments = [ option.text for option in options[1:] ]
-        print(f'ESTABLISHMENTS: {establishments}')
-
-        return establishments
 
     def select_court(self):
         sleep(2)
