@@ -43,8 +43,9 @@ def scrape_single_court(row):
         scraper.select('court_complex_code', row[2])
         sleep(1)
         scraper.goto_courtnumber()
-        sleep(0.6)
+        sleep(1)
         scraper.select('nnjudgecode1', row[3])
+        sleep(1)
         
         scraper.driver.find_element(By.ID, 'radBoth2').click()
         
@@ -60,7 +61,6 @@ def scrape_single_court(row):
 def scrape_orders(courts_csv):
     with open(courts_csv, newline='') as csvfile:
         reader = csv.reader(csvfile)
-        next(reader, None)
         courts = list(reader)
     
     with ThreadPoolExecutor(max_workers=5) as executor:

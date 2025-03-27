@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-rm -r html/* pdf/* db.json
+rm -rf html/* pdf/* *.json
 
 mkdir -p html pdf
