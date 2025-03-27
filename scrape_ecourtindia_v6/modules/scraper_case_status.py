@@ -134,7 +134,7 @@ class ScraperCaseStatus(Scraper):
             script = order.find_all('a')[0].get_attribute_list('onclick')[0]
             self.driver.execute_script(script)
 
-            sleep(2)
+            sleep(0.7)
             obj = self.driver.find_element(By.TAG_NAME, 'object')
             pdf_url = str(obj.get_attribute('data'))
 
