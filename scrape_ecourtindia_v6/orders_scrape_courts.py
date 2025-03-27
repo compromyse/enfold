@@ -22,7 +22,7 @@ class ThreadSafeCSVWriter:
 def scrape_district(state, district, csv_writer):
     try:
         config = {}
-        scraper = ScraperOrders(config)
+        scraper = ScraperOrders(None, config)
         scraper.close_modal()
         
         scraper.select('sess_state_code', state)
@@ -63,7 +63,7 @@ def scrape_courts():
     state = 'Uttar Pradesh'
     
     config = {}
-    scraper = ScraperOrders(config)
+    scraper = ScraperOrders(None, config)
     scraper.close_modal()
     scraper.select('sess_state_code', state)
     
@@ -87,44 +87,5 @@ def scrape_courts():
     
     csv_writer.close()
 
-def scrape_orders(courts):
-    csvfile = open(courts, newline='')
-    reader = csv.reader(csvfile)
-
-    for row in reader:
-        print(row)
-        config = {}
-        scraper = ScraperOrders(config)
-        scraper.close_modal()
-
-        scraper.select('sess_state_code', row[0])
-        scraper.select('sess_dist_code', row[1])
-
-        while True:
-            sleep(0.5)
-            try:
-                modal_is_open = scraper.driver.find_element(By.CLASS_NAME, 'modal').is_displayed()
-                if modal_is_open:
-                    scraper.close_modal()
-                    continue
-                break
-            except:
-                break
-
-        scraper.select('court_complex_code', row[2])
-        sleep(1)
-        scraper.goto_courtnumber()
-
-        scraper.select('nnjudgecode1', row[3])
-        scraper.driver.find_element(By.ID, 'radBoth2').click()
-        scraper.submit_search()
-
-        scraper.parse_orders_table()
-        scraper.handle_orders()
-
-        break
-
-    csvfile.close()
-
 if __name__ == '__main__':
-    scrape_orders('csv/2023-24_pocso.csv')
+    scrape_courts()

@@ -71,7 +71,7 @@ class ScraperOrders(Scraper):
             self.rows.append([ rows[i], rows[i-1].text, rows[i-2].text, rows[i-3].text ])
             i += 5
 
-    def handle_orders(self):
+    def handle_orders(self, court_name):
         for row in self.rows:
             order = row[0]
 
@@ -97,7 +97,7 @@ class ScraperOrders(Scraper):
             except:
                 print(f'UNABLE TO FETCH PDF: {pdf_url}')
 
-            record = { 'case_info': row[3], 'petitioner_respondent': row[2], 'date': row[1], 'filename': filename }
+            record = { 'court_name': court_name, 'case_info': row[3], 'petitioner_respondent': row[2], 'date': row[1], 'filename': filename }
             self.db.insert(record)
 
             self.driver.find_element(By.ID, 'modalOders').find_element(By.CLASS_NAME, 'btn-close').click()

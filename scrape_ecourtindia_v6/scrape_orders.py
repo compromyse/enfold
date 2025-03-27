@@ -43,13 +43,14 @@ def scrape_single_court(row):
         scraper.select('court_complex_code', row[2])
         sleep(1)
         scraper.goto_courtnumber()
+        sleep(0.6)
         scraper.select('nnjudgecode1', row[3])
         
         scraper.driver.find_element(By.ID, 'radBoth2').click()
         
         scraper.submit_search()
         scraper.parse_orders_table()
-        scraper.handle_orders()
+        scraper.handle_orders(row[3])
         
         scraper.driver.quit()
     
