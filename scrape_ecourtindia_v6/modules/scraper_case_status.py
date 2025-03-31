@@ -5,7 +5,6 @@ import uuid
 from urllib import request
 
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.select import Select
 
 from bs4 import BeautifulSoup
 
@@ -13,45 +12,30 @@ import cv2
 import pytesseract
 import tempfile
 
-from tinydb import TinyDB
-
 from .scraper import Scraper
 
 class ScraperCaseStatus(Scraper):
-    def __init__(self, config):
-        Scraper.__init__(self, 'https://services.ecourts.gov.in/ecourtindia_v6/?p=casestatus/index')
+    def __init__(self):
+        Scraper.__init__(self, 'https://services.ecourts.gov.in/ecourtindia_v6/?p=casestatus/index', headless=False)
 
-        self.db = TinyDB('db.json')
-        self.config = config
-
-    def select_act(self):
-        self.select('actcode', self.config['act'])
+    def select_act(self, act):
+        self.select('actcode', act)
         sleep(1)
 
         # Disposed only
         self.driver.find_element(By.ID, 'radDAct').click()
         self.submit_search()
 
-    def select_court(self):
-        sleep(2)
-        while True:
-            self.select('sess_state_code', self.config['state'])
-            self.select('sess_dist_code', self.config['district'])
-            self.select('court_complex_code', self.config['court_complex'])
-
-            sleep(2)
-            modal_is_open = self.driver.find_element(By.CLASS_NAME, 'alert-danger-cust').is_displayed()
-            if modal_is_open:
-                self.close_modal()
-                continue
-
-            break
-
-        self.select('court_est_code', self.config['court_establishment'])
-
     def goto_acts(self):
-        element = self.driver.find_element(By.ID, 'act-tabMenu')
-        element.click()
+        while True:
+            try:
+                self.close_modal()
+                element = self.driver.find_element(By.ID, 'act-tabMenu')
+                element.click()
+                break
+            except:
+                pass
+
         sleep(1)
 
     def submit_search(self):
@@ -77,8 +61,12 @@ class ScraperCaseStatus(Scraper):
             else:
                 captcha_incomplete = False
 
-    def handle_table(self):
-        table_innerhtml = self.driver.find_element(By.ID, 'dispTable').get_attribute('innerHTML')
+    def handle_table(self, db):
+        try:
+            table_innerhtml = self.driver.find_element(By.ID, 'dispTable').get_attribute('innerHTML')
+        except:
+            return
+
         self.rows = BeautifulSoup(str(table_innerhtml), 'html.parser').find_all('td')
         self.views = []
         i = 5
@@ -109,7 +97,7 @@ class ScraperCaseStatus(Scraper):
 
             self.parse_orders_table()
 
-            self.db.insert(self.current_view)
+            db.insert(self.current_view)
             print(f'INSERTED: {self.current_view}')
             self.driver.find_element(By.ID, 'main_back_act').click()
             i += 4
@@ -134,7 +122,7 @@ class ScraperCaseStatus(Scraper):
             script = order.find_all('a')[0].get_attribute_list('onclick')[0]
             self.driver.execute_script(script)
 
-            sleep(0.7)
+            sleep(1)
             obj = self.driver.find_element(By.TAG_NAME, 'object')
             pdf_url = str(obj.get_attribute('data'))
 
@@ -153,4 +141,10 @@ class ScraperCaseStatus(Scraper):
             except:
                 print(f'UNABLE TO FETCH PDF: {pdf_url}')
 
-            self.driver.find_element(By.ID, 'modalOders').find_element(By.CLASS_NAME, 'btn-close').click()
+            sleep(1)
+            while True:
+                try:
+                    self.driver.find_element(By.ID, 'modalOders').find_element(By.CLASS_NAME, 'btn-close').click()
+                    break
+                except:
+                    pass

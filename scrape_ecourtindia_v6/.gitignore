@@ -1,6 +1,8 @@
-courts.csv
+*.csv
 csv/*
 named_pdf/*
 pdf/*
 html/*
-orders.json
+bak/
+translated/*
+*.json

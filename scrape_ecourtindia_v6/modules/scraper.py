@@ -20,8 +20,14 @@ class Scraper:
         sleep(1)
 
     def select(self, i_d, value):
-        sleep(1)
-        element = self.driver.find_element(By.ID, i_d)
+        while True:
+            try:
+                element = self.driver.find_element(By.ID, i_d)
+                break
+            except:
+                sleep(0.2)
+                pass
+
         select = Select(element)
         select.select_by_visible_text(value)
         sleep(1)
@@ -51,6 +57,9 @@ class Scraper:
         print(f'COMPLEXES: {complexes}')
 
         return complexes
+
+    def establishments_visible(self):
+        return self.driver.find_element(By.ID, 'court_est_code').is_displayed()
 
     def scrape_establishments(self):
         element = self.driver.find_element(By.ID, 'court_est_code')

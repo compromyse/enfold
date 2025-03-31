@@ -1,89 +1,67 @@
-import csv
+from time import sleep
 from modules.scraper_case_status import ScraperCaseStatus
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import threading
+from tinydb import TinyDB
 
-SCRAPE_ESTABLISHMENTS = True
+db = TinyDB('db.json')
 
-class ThreadSafeCSVWriter:
-    def __init__(self, filename):
-        self.file = open(filename, 'w', newline='')
-        self.writer = csv.writer(self.file)
-        self.lock = threading.Lock()
+scraper = ScraperCaseStatus()
 
-    def writerow(self, row):
-        with self.lock:
-            self.writer.writerow(row)
+state = 'Karnataka'
+act = 'Juvenile Justice (Care and Protection of Children) Act, 2015'
 
-    def close(self):
-        self.file.close()
+scraper.close_modal()
+scraper.select('sess_state_code', state)
+sleep(1)
 
-def scrape_state_thread(state, config, csv_writer):
-    scraper = ScraperCaseStatus(config)
-    scraper.close_modal()
-    try:
-        scraper.select('sess_state_code', state)
-        for district in scraper.scrape_districts():
+for district in scraper.scrape_districts():
+    print(f'SELECTING DISTRICT {district}')
+    while True:
+        try:
+            scraper.close_modal()
             scraper.select('sess_dist_code', district)
-            for cmplx in scraper.scrape_complexes():
-                scraper.select('court_complex_code', cmplx)
-                if SCRAPE_ESTABLISHMENTS:
-                    establishments = []
-                    for establishment in scraper.scrape_establishments():
-                        establishments.append(establishment)
+            break
+        except:
+            pass
+    sleep(1)
 
-                    csv_writer.writerow([ state, district, cmplx ] + establishments)
-                else:
-                    csv_writer.writerow([ state, district, cmplx ])
-    except Exception as e:
-        print(f"Error scraping {state}: {e}")
-    finally:
-        scraper.driver.quit()
-
-def scrape_courts():
-    config = {}
-
-    m = ScraperCaseStatus(config)
-    m.close_modal()
-
-    csv_writer = ThreadSafeCSVWriter('csv/courts.csv')
-    csv_writer.writerow(['State', 'District', 'Complex'])
-
-    states = m.scrape_states()
-    m.driver.close()
-
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        futures = [
-            executor.submit(scrape_state_thread, state, config, csv_writer) 
-            for state in states
-        ]
-
-        for future in as_completed(futures):
+    for cmplx in scraper.scrape_complexes():
+        sleep(1)
+        print(f'SELECTING COMPLEX {cmplx}')
+        while True:
             try:
-                future.result()
+                scraper.close_modal()
+                scraper.select('court_complex_code', cmplx)
+                break
+            except:
+                pass
+        try:
+            scraper.driver.switch_to.alert.accept();
+            scraper.close_modal()
+        except:
+            pass
+
+        for establishment in scraper.scrape_establishments():
+            sleep(1)
+            print(f'SELECTING ESTABLISHMENT {establishment}')
+            while True:
+                try:
+                    scraper.close_modal()
+                    scraper.select('court_est_code', establishment)
+                    break
+                except Exception as e:
+                    print("EXCEPTION HANDLED:")
+                    print(e)
+
+            sleep(1)
+            scraper.close_modal()
+
+            sleep(1)
+            scraper.goto_acts()
+            try:
+                scraper.select_act(act)
+                scraper.handle_table(db)
             except Exception as e:
-                print(f"A thread encountered an error: {e}")
+                    print("EXCEPTION HANDLED:")
+                    print(e)
 
-    csv_writer.close()
-
-def scrape_orders():
-    config = {}
-
-    m = ScraperCaseStatus(config)
-    m.close_modal()
-
-    config['state'] = input('Select a state: ')
-    config['district'] = input('Select a district: ')
-    config['court_complex'] = input('Select a court complex: ')
-    config['court_establishment'] = input('Select a court establishment: ')
-    config['act'] = input('Select an act: ')
-
-    m.select_court()
-    m.goto_acts()
-    m.select_act()
-    m.handle_table()
-
-    m.driver.close()
-
-if __name__ == '__main__':
-    scrape_courts()
+scraper.driver.close()
