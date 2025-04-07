@@ -32,6 +32,7 @@
         tesseract
 
         nodejs_22
+        vtsls
       ];
     };
   };
