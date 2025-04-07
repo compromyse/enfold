@@ -27,14 +27,11 @@ crime_query = Query()
 
 # ---------- Gradio Logic ----------
 def lookup_crime(section, act_key):
-    if section <= 0:
-        return "Please enter a valid section number.", "", "", ""
-
     table = db.table(key_from_name[act_key])
-    results = table.search(crime_query.section == str(section))
+    results = table.search(crime_query.section == section)
 
     if not results:
-        return f"No record found for section {section} under {act_key}.", "", "", ""
+        return f"No record found for section {section} under {act_key}.", "", ""
 
     offence = results[0]
     return [
@@ -48,7 +45,7 @@ with gradio_ui:
     gr.Markdown("## Heinous Crime Lookup Tool")
 
     with gr.Row():
-        section_input = gr.Number(label="Enter Section Number", value=0)
+        section_input = gr.Text(label="Enter Section Number")
         act_dropdown = gr.Dropdown(choices=list(name_from_key.values()), label="Select Act")
 
     submit_btn = gr.Button("Lookup")
