@@ -16,6 +16,7 @@
           p.fastapi
           p.uvicorn
           p.jinja2
+          p.streamlit
 
           # p.pdf2image
           # p.openai-whisper

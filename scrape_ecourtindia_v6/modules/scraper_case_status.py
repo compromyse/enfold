@@ -19,7 +19,11 @@ class ScraperCaseStatus(Scraper):
         Scraper.__init__(self, 'https://services.ecourts.gov.in/ecourtindia_v6/?p=casestatus/index', headless=False)
 
     def select_act(self, act):
-        self.select('actcode', act)
+        try:
+            self.select('actcode', act)
+        except Exception as e:
+            print('EXCEPTION HANDLED:')
+            print(e)
         sleep(1)
 
         # Disposed only
@@ -124,6 +128,10 @@ class ScraperCaseStatus(Scraper):
 
             sleep(1)
             obj = self.driver.find_element(By.TAG_NAME, 'object')
+            if self.driver.find_element(By.ID, 'validateError').is_displayed():
+                self.close_modal()
+                return
+
             pdf_url = str(obj.get_attribute('data'))
 
             while True:

@@ -8,6 +8,7 @@ scraper = ScraperCaseStatus()
 
 state = 'Karnataka'
 act = 'Juvenile Justice (Care and Protection of Children) Act, 2015'
+# act = 'U Sec 96 CPC'
 
 scraper.close_modal()
 scraper.select('sess_state_code', state)
@@ -34,34 +35,47 @@ for district in scraper.scrape_districts():
                 break
             except:
                 pass
+
         try:
             scraper.driver.switch_to.alert.accept();
             scraper.close_modal()
         except:
             pass
 
-        for establishment in scraper.scrape_establishments():
-            sleep(1)
-            print(f'SELECTING ESTABLISHMENT {establishment}')
-            while True:
+        establishments = scraper.scrape_establishments()
+        if len(establishments) == 0:
+                sleep(1)
+                scraper.close_modal()
+
+                sleep(1)
+                scraper.goto_acts()
                 try:
-                    scraper.close_modal()
+                    scraper.select_act(act)
+                    scraper.handle_table(db)
+                    sleep(1)
+                except Exception as e:
+                        print("EXCEPTION HANDLED:")
+                        print(e)
+        else:
+            for establishment in establishments:
+                sleep(1)
+                print(f'SELECTING ESTABLISHMENT {establishment}')
+
+                while True:
                     scraper.select('court_est_code', establishment)
                     break
+
+                sleep(1)
+                scraper.close_modal()
+
+                sleep(1)
+                scraper.goto_acts()
+                try:
+                    scraper.select_act(act)
+                    scraper.handle_table(db)
+                    sleep(1)
                 except Exception as e:
-                    print("EXCEPTION HANDLED:")
-                    print(e)
-
-            sleep(1)
-            scraper.close_modal()
-
-            sleep(1)
-            scraper.goto_acts()
-            try:
-                scraper.select_act(act)
-                scraper.handle_table(db)
-            except Exception as e:
-                    print("EXCEPTION HANDLED:")
-                    print(e)
+                        print("EXCEPTION HANDLED:")
+                        print(e)
 
 scraper.driver.close()
