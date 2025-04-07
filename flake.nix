@@ -17,6 +17,7 @@
           p.uvicorn
           p.jinja2
           p.streamlit
+          p.gradio
 
           # p.pdf2image
           # p.openai-whisper
@@ -29,6 +30,8 @@
         geckodriver
 
         tesseract
+
+        nodejs_22
       ];
     };
   };
