@@ -34,14 +34,13 @@ def lookup_crime(section, act_key):
     results = table.search(crime_query.section == str(section))
 
     if not results:
-        return f"No record found for section {section} under {name_from_key.get(act_key)}.", "", "", ""
+        return f"No record found for section {section} under {act_key}.", "", "", ""
 
     offence = results[0]
     return [
         f"## Severity: {offence.get('severity', 'N/A')}",
         f"{offence.get('section_text', 'N/A')}",
-        f"### Minimum Punishment: {offence.get('minimum_punishment', 'N/A')}",
-        f"Comments: {offence.get('comment', 'N/A')}"
+        f"### Minimum Punishment: {offence.get('minimum_punishment', 'N/A')}"
     ]
 
 gradio_ui = gr.Blocks()
@@ -56,12 +55,11 @@ with gradio_ui:
     severity = gr.Markdown()
     section_text = gr.Markdown()
     punishment = gr.Markdown()
-    comment = gr.Markdown()
 
     submit_btn.click(
         fn=lookup_crime,
         inputs=[section_input, act_dropdown],
-        outputs=[severity, section_text, punishment, comment]
+        outputs=[severity, section_text, punishment]
     )
 
 # ---------- FastAPI Logic ----------
@@ -122,14 +120,13 @@ async def handle_admin_upload(
         reader = csv.reader(f)
         next(reader)
         for row in reader:
-            if len(row) < 5:
+            if len(row) < 4:
                 continue
             table.insert({
                 "section": row[0],
                 "section_text": row[1],
                 "minimum_punishment": row[2],
-                "severity": row[3],
-                "comment": row[4],
+                "severity": row[3]
             })
 
     return RedirectResponse("/admin", status_code=303)
