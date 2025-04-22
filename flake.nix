@@ -11,6 +11,7 @@
           p.selenium
           p.opencv-python
           p.pytesseract
+          p.easyocr
           p.beautifulsoup4
           p.tinydb
           p.fastapi
@@ -19,10 +20,14 @@
           p.streamlit
           p.gradio
 
-          # p.pdf2image
+          p.pdf2image
+          p.argostranslate
           # p.openai-whisper
           # p.torch-bin
         ]))
+
+        python3Packages.pymupdf
+        mupdf
 
         pyright
 

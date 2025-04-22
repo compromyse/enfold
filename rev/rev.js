@@ -9,17 +9,6 @@ let regenerateWebserviceCallFlag = false;
 let globaliv = "4B6250655368566D";
 let globalIndex = 0;
 
-// Utility: Check internet connection
-async function checkDeviceOnlineStatus() {
-  try {
-    await dns.lookup('google.com');
-    return true;
-  } catch {
-    console.error("Please check your internet connection and try again");
-    return false;
-  }
-}
-
 // Show error message (replace alert with console)
 function showErrorMessage(message) {
   console.error("Error:", message);
@@ -74,19 +63,21 @@ function decodeResponse(result) {
 
 // API call wrapper
 async function callToWebService(url, data, callback) {
-  const online = await checkDeviceOnlineStatus();
-  if (!online) return;
-
   try {
     const encryptedData = encryptData(data);
     const headers = {
       'Content-Type': 'application/json',
+      'user-agent': 'eCourtsServices/2.0.1 (iPhone; iOS 18.4; Scale/3.00)'
     };
 
     headers['Authorization'] = 'Bearer ' + encryptData(jwttoken);
 
-    const params = new URLSearchParams({ data: encryptedData });
-    const fullUrl = `${url}?${params.toString()}`;
+    // const params = new URLSearchParams({ action_code: encryptedData });
+    // const fullUrl = `${url}?${params.toString()}`;
+    const fullUrl = url;
+
+    console.log(data);
+    console.log(fullUrl);
 
     const res = await fetch(fullUrl, {
       method: 'GET',
@@ -94,6 +85,8 @@ async function callToWebService(url, data, callback) {
     });
 
     const responseText = await res.text();
+
+    console.log(`responseText:\n${responseText}\n`)
     const decodedResponse = JSON.parse(decodeResponse(responseText));
 
     if (decodedResponse.token) {
@@ -108,7 +101,7 @@ async function callToWebService(url, data, callback) {
           const packageName = "com.eCourts.mobile";
           const uidObj = { uid: "324456:" + packageName };
           const newData = { ...data, ...uidObj };
-          return callToWebService(url, newData, callback);
+          return await callToWebService(url, newData, callback);
         } else {
           showErrorMessage("Session expired!");
         }
@@ -133,15 +126,13 @@ async function callToWebService(url, data, callback) {
 
 // Fetch Court Complexes
 async function getCourtComplexes(state_code, dist_code, callback) {
-  const url = hostIP + "courtEstWebService.php";
-  const data = {
-    action_code: "fillCourtComplex",
-    state_code,
-    dist_code
-  };
+  const url = hostIP + "appReleaseWebService.php";
+  let data = 'fillState';
   await callToWebService(url, data, callback);
 }
 
 getCourtComplexes("1", "101", (res) => {
   console.log("Court Complexes:", res.courtComplex);
 });
+
+console.log(decodeResponse('POaJ42M9nP6pkEJim6CFmQ=='));

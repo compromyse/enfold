@@ -51,7 +51,7 @@ def scrape_single_court(row):
         
         scraper.submit_search()
         scraper.parse_orders_table()
-        scraper.handle_orders(row[3])
+        scraper.handle_orders(row[3], row[1])
         
         scraper.driver.quit()
     
@@ -63,7 +63,7 @@ def scrape_orders(courts_csv):
         reader = csv.reader(csvfile)
         courts = list(reader)
     
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         futures = [
             executor.submit(scrape_single_court, court) 
             for court in courts
@@ -75,6 +75,5 @@ def scrape_orders(courts_csv):
             except Exception as e:
                 print(f"A thread encountered an error: {e}")
     
-if __name__ == '__main__':
-    input_file = 'csv/2023-24_pocso.csv'
-    scrape_orders(input_file)
+input_file = 'csv/2023-24_pocso_all_districts.csv'
+scrape_orders(input_file)

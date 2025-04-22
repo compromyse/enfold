@@ -6,3 +6,5 @@ html/*
 bak/
 translated/*
 *.json
+transcribed/*
+txt/*

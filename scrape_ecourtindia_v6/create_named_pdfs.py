@@ -13,11 +13,12 @@ db = TinyDB('orders.json')
 entries = db.all()
 
 for entry in entries:
+    district = sanitize_filename(entry['district'])
     date = sanitize_filename(entry['date'])
     case_info = sanitize_filename(entry['case_info'])
     court_name = sanitize_filename(entry['court_name'])
     
-    newname = f"named_pdf/{date}---{case_info}---{court_name}.pdf"
+    newname = f"named_pdf/{district}---{date}---{case_info}---{court_name}.pdf"
     
     try:
         shutil.copyfile(entry['filename'], newname)
