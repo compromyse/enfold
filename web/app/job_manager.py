@@ -8,18 +8,22 @@ class JobManager:
         self.redis = Redis()
         self.q = Queue(connection=self.redis)
 
-    def enqueue_scrape(self, name, acts, section, state_code):
+    def enqueue_scrape(self, name, acts, sections, state_code):
         # 4 hour timeout
         return self.q.enqueue(
             scrape_cases,
             name,
             acts,
-            section,
+            sections,
             state_code,
             job_timeout=14400
         )
 
-    def get_started_jobs(self):
+    def get_jobs(self):
         started_job_ids = self.q.started_job_registry.get_job_ids()
-        jobs = [Job.fetch(job_id, connection=self.redis) for job_id in started_job_ids]
-        return jobs
+        started_jobs = [Job.fetch(job_id, connection=self.redis) for job_id in started_job_ids]
+
+        finished_job_ids = self.q.finished_job_registry.get_job_ids()
+        finished_jobs = [Job.fetch(job_id, connection=self.redis) for job_id in finished_job_ids]
+
+        return started_jobs + finished_jobs

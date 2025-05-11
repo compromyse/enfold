@@ -21,7 +21,7 @@ main = Blueprint('main', __name__)
 @main.route('/')
 @login_required
 def home():
-    jobs = job_manager.get_started_jobs()
+    jobs = job_manager.get_jobs()
     return render_template('home.html', user=current_user, states=states, acts=act_list, jobs=jobs)
 
 @main.route('/logout')
@@ -57,14 +57,14 @@ def create_user():
 @login_required
 def enqueue_job():
     acts = request.form.getlist('act')
-    section = request.form.get('section')
+    sections = request.form.get('section').split(',')
     state_code = request.form.get('state_code')
     name = request.form.get('name')
 
     if not section:
         section = ''
 
-    job = job_manager.enqueue_scrape(f'{name} - {time.time_ns()}', acts, section, state_code)
+    job = job_manager.enqueue_scrape(f'{name} - {time.time_ns()}', acts, sections, state_code)
 
     flash('Job created.', 'info')
     return redirect(url_for('main.home'))
@@ -72,5 +72,5 @@ def enqueue_job():
 @main.route('/download/<filename>')
 @login_required
 def download_output(filename):
-    output_dir = os.path.join(os.getcwd(), 'outputs')
+    output_dir = os.path.join(os.getcwd(), 'app/outputs')
     return send_from_directory(output_dir, f'{filename}.csv', as_attachment=True)

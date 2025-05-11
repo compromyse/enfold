@@ -4,7 +4,8 @@ from bs4 import BeautifulSoup
 import time
 import csv
 
-def scrape_cases(name, acts, section, state_code):
+def scrape_cases(name, acts, sections, state_code):
+    acts = set(acts)
     db = TinyDB(f'app/outputs/{name}.json')
     interface = Interface()
 
@@ -31,29 +32,30 @@ def scrape_cases(name, acts, section, state_code):
                 print(f'ESTABLISHMENT: {i}/{len(court_establishments)}')
 
                 for act in acts:
-                    try:
-                        cases = interface.search_by_act(state_code, dist_code, court_establishment, act, section)
-                    except Exception as e:
-                        print(f"[ERROR] Failed to scrape cases in complex {complex_name}: {e}")
-                        continue
-
-                    for j, case in enumerate(cases, 1):
-                        print(f'CASE: {j}/{len(cases)}')
-
+                    for section in sections:
                         try:
-                            case_no = case['case_no']
-                            case_history = interface.case_history(state_code, dist_code, court_establishment, case_no)
+                            cases = interface.search_by_act(state_code, dist_code, court_establishment, act, section)
                         except Exception as e:
-                            print(f"[ERROR] Failed to get history for case {case.get('case_no', 'UNKNOWN')}: {e}")
+                            print(f"[ERROR] Failed to scrape cases in complex {complex_name}: {e}")
                             continue
 
-                        try:
-                            case_history['case_no'] = case_no
-                            case_history['complex_name'] = complex_name
-                            db.insert(case_history)
+                        for j, case in enumerate(cases, 1):
+                            print(f'CASE: {j}/{len(cases)}')
 
-                        except Exception as e:
-                            print(f"[ERROR] Failed to parse orders for case {case_no}: {e}")
+                            try:
+                                case_no = case['case_no']
+                                case_history = interface.case_history(state_code, dist_code, court_establishment, case_no)
+                            except Exception as e:
+                                print(f"[ERROR] Failed to get history for case {case.get('case_no', 'UNKNOWN')}: {e}")
+                                continue
+
+                            try:
+                                case_history['case_no'] = case_no
+                                case_history['complex_name'] = complex_name
+                                db.insert(case_history)
+
+                            except Exception as e:
+                                print(f"[ERROR] Failed to parse orders for case {case_no}: {e}")
     
     entries = db.all()
 
