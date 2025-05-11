@@ -19,16 +19,56 @@
 </details>
 {% endif %}
 
-<h3>Create a New Job</h3>
+<h3>Create a New Scrape Job</h3>
 <form method="post" action="{{ url_for('main.enqueue_job') }}">
-    <input type="text" name="act" placeholder="Act Name*" required>
+    <input type="text" name="name" placeholder="Name" required>
+
+    <label for="act">Select One or More Acts:</label>
+    <select name="act" id="act" multiple style="margin-bottom: 30px; padding: 5px;" required>
+      {% for code, name in acts %}
+        <option value="{{ code }}" style="color: black;">{{ name }}</option>
+      {% endfor %}
+    </select>
+
     <input type="text" name="section" placeholder="Section">
-    <select name="state" id="state">
+
+    <select name="state_code">
       {% for code, name in states %}
         <option value="{{ code }}">{{ name }}</option>
       {% endfor %}
     </select>
-    <button type="submit">Create User</button>
+
+    <button type="submit">Create Scrape Job</button>
 </form>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    new SlimSelect({
+      select: '#act'
+    });
+  })
+</script>
+
+<h3>Running Jobs</h3>
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Job Name</th>
+      <th scope="col">Job Status</th>
+      <th scope="col">Output</th>
+      <th scope="col">Log</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for job in jobs %}
+    <tr>
+      <td>{{ job.args[0] }}</td>
+      <td>{{ job._status }}</td>
+      <td><a href="{{ url_for('main.download_output', filename=job.args[0]) }}">Download</a></td>
+      <td>Running</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 
 {% endblock %}

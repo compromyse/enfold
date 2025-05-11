@@ -1,18 +1,28 @@
-from flask import request, flash
+from flask import request, flash, send_from_directory
 from flask import Blueprint, render_template, redirect, url_for
 from flask_login import login_required, logout_user, current_user
 from .models import User
 
+import json
+import time
+import os
+
 from .modules.interface import Interface
+from .job_manager import JobManager
+
+from tinydb import TinyDB
 
 states = Interface().get_states()
+act_list = json.loads(open('app/acts.json').read())
 
+job_manager = JobManager()
 main = Blueprint('main', __name__)
 
 @main.route('/')
 @login_required
 def home():
-    return render_template('home.html', user=current_user, states=states)
+    jobs = job_manager.get_started_jobs()
+    return render_template('home.html', user=current_user, states=states, acts=act_list, jobs=jobs)
 
 @main.route('/logout')
 @login_required
@@ -46,16 +56,21 @@ def create_user():
 @main.route('/enqueue_job', methods=['POST'])
 @login_required
 def enqueue_job():
-    act = request.form.get('act')
+    acts = request.form.getlist('act')
     section = request.form.get('section')
     state_code = request.form.get('state_code')
-
-    if not act or not state_code:
-        flash('All fields must be filled.', 'error')
-        return redirect(url_for('main.home'))
+    name = request.form.get('name')
 
     if not section:
         section = ''
 
+    job = job_manager.enqueue_scrape(f'{name} - {time.time_ns()}', acts, section, state_code)
+
     flash('Job created.', 'info')
     return redirect(url_for('main.home'))
+
+@main.route('/download/<filename>')
+@login_required
+def download_output(filename):
+    output_dir = os.path.join(os.getcwd(), 'outputs')
+    return send_from_directory(output_dir, f'{filename}.csv', as_attachment=True)
