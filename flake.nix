@@ -19,12 +19,22 @@
           p.jinja2
           p.streamlit
           p.gradio
+          p.pycryptodome
+
+          p.flask
+          p.flask-login
+          p.rq
+
+          p.mitmproxy
 
           p.pdf2image
           p.argostranslate
           # p.openai-whisper
           # p.torch-bin
         ]))
+
+        apktool
+        openjdk8
 
         python3Packages.pymupdf
         mupdf
@@ -38,6 +48,8 @@
 
         nodejs_22
         vtsls
+
+        redis
       ];
     };
   };
