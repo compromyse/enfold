@@ -65,7 +65,7 @@
     {% for job in completed_jobs %}
     <tr>
       <td>{{ job['name'] }}</td>
-      <td>COMPLETED</td>
+      <td>JobStatus.COMPLETED</td>
       <td><a href="{{ url_for('main.download_output', filename=job['name']) }}">Download</a></td>
     </tr>
     {% endfor %}
@@ -73,7 +73,7 @@
     <tr>
       <td>{{ job.args[0] }}</td>
       <td>{{ job._status }}</td>
-      <td><a href="{{ url_for('main.download_output', filename=job.args[0]) }}">Download</a></td>
+      <td>Not Available</td>
     </tr>
     {% endfor %}
   </tbody>

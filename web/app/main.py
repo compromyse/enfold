@@ -21,7 +21,7 @@ main = Blueprint('main', __name__)
 @login_required
 def home():
     jobs = job_manager.get_jobs()
-    completed_jobs = TinyDB('jobs.json').all()
+    completed_jobs = TinyDB('app/jobs.json').all()
     return render_template('home.html', user=current_user, states=states, acts=act_list, completed_jobs=completed_jobs, jobs=jobs)
 
 @main.route('/logout')
