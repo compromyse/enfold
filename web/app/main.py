@@ -1,6 +1,7 @@
 from flask import request, flash, send_from_directory
 from flask import Blueprint, render_template, redirect, url_for
 from flask_login import login_required, logout_user, current_user
+from tinydb import TinyDB
 from .models import User
 
 import json
@@ -9,8 +10,6 @@ import os
 
 from .modules.interface import Interface
 from .job_manager import JobManager
-
-from tinydb import TinyDB
 
 states = Interface().get_states()
 act_list = json.loads(open('app/acts.json').read())
@@ -22,7 +21,8 @@ main = Blueprint('main', __name__)
 @login_required
 def home():
     jobs = job_manager.get_jobs()
-    return render_template('home.html', user=current_user, states=states, acts=act_list, jobs=jobs)
+    completed_jobs = TinyDB('jobs.json').all()
+    return render_template('home.html', user=current_user, states=states, acts=act_list, completed_jobs=completed_jobs, jobs=jobs)
 
 @main.route('/logout')
 @login_required
@@ -58,14 +58,14 @@ def create_user():
 @login_required
 def enqueue_job():
     acts = request.form.getlist('act')
-    sections = request.form.get('section').split(',')
+    sections = request.form.get('section', '').split(',')
     state_code = request.form.get('state_code')
     name = request.form.get('name')
 
-    if not section:
-        section = ''
+    if not sections:
+        sections = ''
 
-    job = job_manager.enqueue_scrape(f'{name} - {time.time_ns()}', acts, sections, state_code)
+    job_manager.enqueue_scrape(f'{name} - {time.time_ns()}', acts, sections, state_code)
 
     flash('Job created.', 'info')
     return redirect(url_for('main.home'))

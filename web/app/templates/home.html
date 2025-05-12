@@ -62,6 +62,13 @@
     </tr>
   </thead>
   <tbody>
+    {% for job in completed_jobs %}
+    <tr>
+      <td>{{ job['name'] }}</td>
+      <td>COMPLETED</td>
+      <td><a href="{{ url_for('main.download_output', filename=job['name']) }}">Download</a></td>
+    </tr>
+    {% endfor %}
     {% for job in jobs %}
     <tr>
       <td>{{ job.args[0] }}</td>
