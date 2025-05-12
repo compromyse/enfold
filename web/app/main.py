@@ -36,6 +36,7 @@ def logout():
 def create_user():
     username = request.form.get('username')
     password = request.form.get('password')
+    admin = request.form.get('admin')
 
     if current_user.admin != True:
         flash('Only admin can create new users.', 'error')
@@ -45,7 +46,7 @@ def create_user():
         flash('Username and password required.', 'error')
         return redirect(url_for('main.home'))
 
-    user = User.create(username, password)
+    user = User.create(username, password, admin == 'on')
     if user:
         flash(f'User {username} created successfully.', 'success')
     else:

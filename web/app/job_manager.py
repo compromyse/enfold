@@ -20,10 +20,12 @@ class JobManager:
         )
 
     def get_jobs(self):
+        queued_jobs = self.q.get_jobs()
+
         started_job_ids = self.q.started_job_registry.get_job_ids()
         started_jobs = [Job.fetch(job_id, connection=self.redis) for job_id in started_job_ids]
 
         finished_job_ids = self.q.finished_job_registry.get_job_ids()
         finished_jobs = [Job.fetch(job_id, connection=self.redis) for job_id in finished_job_ids]
 
-        return started_jobs + finished_jobs
+        return queued_jobs + started_jobs + finished_jobs
